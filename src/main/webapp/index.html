@@ -1,0 +1,122 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CRUCIBLE SURVIVOR</title>
+  <link rel="stylesheet" href="/styles/core.css" />
+
+  <link rel="stylesheet" href="/styles/dashboard.css" />
+  <script src="/js/jquery-1.7.2.min.js"></script>
+  <script src="/js/raphael.js"></script>
+  <script src="app/gen/leader.js"></script>
+  <script src="/js/angular/angular.js"></script>
+  <script src="app/crucible-leader.js"></script>
+  <script src="app/graphs.js"></script>
+
+  <meta http-equiv="refresh" content="600">
+</head>
+<body ng-app="CrucibleLeader">
+
+<div id="vertical-wrapper" ng-controller="LeaderController">
+
+<div id="horizontal-wrapper" class="container-fluid">
+
+<!-- Banner -->
+<div id="banner" class="row-fluid panel">
+  <div class="span12">
+    <hr class="stripe red" />
+    <hr class="stripe orange" />
+    <hr class="stripe gold" />
+     <img class="logo" src="/img/logo.png" />
+    <h1>CRUCIBLE SURVIVOR</h1>
+    <div class="info">
+      <span class="company">bIzO</span>
+      <span class="date">{{updateDate}}</span>
+    </div>
+  </div>
+</div>
+
+<!-- Leaderboards -->
+
+
+<div id="leaderboards" class="row-fluid">
+  <div class="span6">
+
+    <div class="leaderboard" id="top-closers">
+      <h2><span>Hall of Fame</span></h2>
+      <ol>
+        <li ng-repeat="u in fame">
+          <img class="avatar" src="{{u.avatarUrl}}" />
+          <span class="name">{{u.name}}</span>
+          <span class="count">{{u.reviews}}</span>
+        </li>
+      </ol>
+    </div>
+
+  </div>
+  <div class="span6">
+
+    <div class="leaderboard" id="worst-closers">
+      <h2><span>Hall of Shame</span></h2>
+      <ol>
+
+        <li ng-repeat="u in shame">
+          <img class="avatar" src="{{u.avatarUrl}}" />
+          <span class="name">{{u.name}}</span>
+          <span class="count">{{u.reviews}}</span>
+        </li>
+      </ol>
+    </div>
+
+  </div>
+</div>
+
+<div id="charts" class="row-fluid panel">
+
+  <div class="span12">
+    <hr class="stripe red" />
+    <hr class="stripe orange" />
+    <hr class="stripe gold" />
+  </div>
+
+  <div class="span4">
+    <div class="chart-container">
+      <label>opened/<span style="color: #1F507E">closed</span></label>
+
+      <div class="chart">
+        <bug-rate-chart data="reviewRateData"></bug-rate-chart>
+      </div>
+    </div>
+  </div>
+
+  <div class="span4">
+    <div class="chart-container">
+      <label>Open Reviews</label>
+
+      <div class="chart">
+        <bug-chart data="openReviewData"></bug-chart>
+      </div>
+    </div>
+  </div>
+
+  <div id="current-stats" class="span4">
+    <p class="title">Open reviews</p>
+    <p class="open-bug-count">
+      {{reviewStats.openReviews}}
+    </p>
+    <div class="delta {{reviewStats.deltaChange}}">
+      {{reviewStats.openReviewsDelta}}
+    </div>
+  </div>
+
+</div>
+
+<div id="footer" class="row-fluid">
+  Review Survivor TM & Copyright 1987 99designs, gengo, and bizo dev teams
+  <span class="start">&lt;Insert coin to begin playing&gt;</span>
+</div>
+
+</div>
+</div>
+
+</body>

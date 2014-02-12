@@ -1,0 +1,11 @@
+@font-face {
+  font-family: PressStart;
+  src: url(/fonts/PressStart2P.ttf);
+}
+@font-face {
+  font-family: MICRO;
+  src: url(/fonts/MICRO.TTF);
+}
+body {
+  font-family: PressStart;
+}

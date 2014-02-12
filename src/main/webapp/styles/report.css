@@ -1,0 +1,46 @@
+@font-face {
+  font-family: PressStart;
+  src: url(/fonts/PressStart2P.ttf);
+}
+@font-face {
+  font-family: MICRO;
+  src: url(/fonts/MICRO.TTF);
+}
+body {
+  font-family: PressStart;
+}
+.report {
+  font-size: 60%;
+}
+.report table {
+  border-collapse: collapse;
+}
+.report th,
+.report td {
+  margin: 0;
+}
+.report th,
+.report td,
+.report a {
+  padding: 0.6em 0.8em;
+}
+.report th {
+  text-align: left;
+  border-bottom: 2px black solid;
+}
+.report tbody td {
+  border-bottom: 1px black dotted;
+}
+.report td a {
+  text-decoration: none;
+  display: block;
+  margin: -0.6em -0.8em;
+}
+.report td a:hover {
+  background: #00C;
+  color: white;
+}
+#old-bugs .opened,
+#old-bugs .assignee {
+  white-space: nowrap;
+}
