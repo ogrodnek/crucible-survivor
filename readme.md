@@ -21,7 +21,7 @@
 
 ## Running
 
-  The dashboard is meant to be run as a static stei in Amazon S3, but it can be hosted by any web server that can host static content.
+  The dashboard is meant to be run as a static site in Amazon S3, but it can be hosted by any web server that can host static content.
 
    A fake stats file is included for testing, so the site will display out of the box.  For local testing, I typically run it using python's SimpleHTTPServer, e.g.
   
