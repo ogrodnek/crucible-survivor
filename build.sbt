@@ -4,7 +4,7 @@ name := "crucible-survivor"
 
 version := "1.0.0"
 
-scalaVersion := "2.10.2"
+scalaVersion := "2.10.3"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-language:_")
 
