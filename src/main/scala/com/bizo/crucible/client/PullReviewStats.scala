@@ -78,9 +78,13 @@ object PullReviewStats {
     val cutOff = c.getTime
     val count = new java.util.concurrent.atomic.AtomicInteger
 
-    val reviewsToConsider = (ret filter { r =>
-      cutOff.compareTo(r.createDate) < 0
-    })
+    val reviewsToConsider =
+      if (numMonths <= 0)
+        ret
+      else
+        (ret filter { r =>
+          cutOff.compareTo(r.createDate) < 0
+        })
 
     logger.info("considering %d reviews for last %d month(s).".format(reviewsToConsider.size, numMonths))
 
