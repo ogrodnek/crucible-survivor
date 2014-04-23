@@ -183,14 +183,24 @@ object PullReviewStats {
     (
       winners.take(5).map {
         case (u, stats) =>
-          new ReviewLeaderUser(u, users(u).avatarUrl, stats.getOrElse(true, 0))
+          if (users.contains(u))
+            new ReviewLeaderUser(u, users(u).avatarUrl, stats.getOrElse(true, 0))
+          else
+            ReviewLeaderMissingUser(u, stats.getOrElse(false, 0))
       },
       losers.take(5).map {
         case (u, stats) =>
-          new ReviewLeaderUser(u, users(u).avatarUrl, stats.getOrElse(false, 0))
+          if (users.contains(u))
+            new ReviewLeaderUser(u, users(u).avatarUrl, stats.getOrElse(false, 0))
+          else
+            ReviewLeaderMissingUser(u, stats.getOrElse(false, 0))
       })
   }
 
+  def ReviewLeaderMissingUser(name: String, reviews: Int) = ReviewLeaderUser(
+    name,
+    "http://gravatar.com/avatar/00000000000000000000000000000000?d=retro&s=48",
+    reviews)
 }
 
 case class ReviewLeaderStats(
