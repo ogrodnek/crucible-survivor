@@ -157,6 +157,7 @@ body {
 }
 .chart-container .chart > * {
   display: block;
+  height: inherit;
 }
 /* Current stats */
 #current-stats {
