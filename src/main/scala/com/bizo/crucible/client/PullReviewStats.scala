@@ -175,32 +175,43 @@ object PullReviewStats {
         (reviewer -> state.groupBy(_.completed).map(s => (s._1 -> s._2.size)))
     }).toSeq
 
-    val winners = reviewerStats.sortBy(_._2.get(true)).reverse
-    val losers = reviewerStats.sortBy(_._2.get(false)).reverse
-
     val users = client.getUsers
 
+    val losers = reviewerStats
+      .sortBy(_._2.get(true)).reverse // completed reviews (secondary sort)
+      .sortBy(_._2.get(false)).reverse // open reviews (primary sort)
+      .filter(it => users.contains(it._1) || it._2.get(false).nonEmpty) // remove deleted users w/0 open
+
     (
-      winners.take(5).map {
+      losers.reverse.take(5).map {
         case (u, stats) =>
           if (users.contains(u))
-            new ReviewLeaderUser(u, users(u).avatarUrl, stats.getOrElse(true, 0))
+            new ReviewLeaderUser(u, users(u).avatarUrl, numOpen(stats), numComplete(stats))
           else
-            ReviewLeaderMissingUser(u, stats.getOrElse(false, 0))
+            ReviewLeaderMissingUser(u, numOpen(stats), numComplete(stats))
       },
       losers.take(5).map {
         case (u, stats) =>
           if (users.contains(u))
-            new ReviewLeaderUser(u, users(u).avatarUrl, stats.getOrElse(false, 0))
+            new ReviewLeaderUser(u, users(u).avatarUrl, numOpen(stats), numComplete(stats))
           else
-            ReviewLeaderMissingUser(u, stats.getOrElse(false, 0))
+            ReviewLeaderMissingUser(u, numOpen(stats), numComplete(stats))
       })
   }
 
-  def ReviewLeaderMissingUser(name: String, reviews: Int) = ReviewLeaderUser(
+  def numOpen(stats: Map[Boolean, Int]): Int = {
+    stats.getOrElse(false, 0)
+  }
+
+  def numComplete(stats: Map[Boolean, Int]): Int = {
+    stats.getOrElse(true, 0)
+  }
+
+  def ReviewLeaderMissingUser(name: String, openReviews: Int, completeReviews: Int) = ReviewLeaderUser(
     name,
     "http://gravatar.com/avatar/00000000000000000000000000000000?d=retro&s=48",
-    reviews)
+    openReviews,
+    completeReviews)
 }
 
 case class ReviewLeaderStats(
@@ -211,4 +222,4 @@ case class ReviewLeaderStats(
   openCloseStats: Seq[Array[Any]],
   openCountStats: Seq[Array[Any]])
 
-case class ReviewLeaderUser(name: String, avatarUrl: String, reviews: Int)
+case class ReviewLeaderUser(name: String, avatarUrl: String, openReviews: Int, completeReviews: Int)
