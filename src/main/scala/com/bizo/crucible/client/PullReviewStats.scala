@@ -34,9 +34,10 @@ object PullReviewStats {
     }
 
     val (openReviewsToConsider, openReviewDetails) = pullDetails("Review", 0)
+    val (_, recentOpenReviewDetails) = pullDetails("Review", 1)
     val (closedReviewsToConsider, closedReviewDetails) = pullDetails("Closed", 1)
 
-    val (winners, losers) = getLeaderBoard(openReviewDetails, closedReviewDetails)
+    val (winners, losers) = getLeaderBoard(openReviewDetails, closedReviewDetails, recentOpenReviewDetails)
 
     val df = new SimpleDateFormat("E MM.dd hh:mm a")
     df.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));
@@ -90,7 +91,7 @@ object PullReviewStats {
 
     val reviewDetails = (reviewsToConsider.par map { r =>
       System.err.print(".")
-      if (count.incrementAndGet() % 25 == 0) {
+      if (count.incrementAndGet() % 50 == 0) {
         System.err.println()
       }
       client.getReview(r.permaId)
@@ -167,44 +168,44 @@ object PullReviewStats {
     })
   }
 
-  private def getLeaderBoard(openReviews: Seq[ReviewResponse], closedReviews: Seq[ReviewResponse], num: Int = 5) = {
-    val a = (openReviews ++ closedReviews).flatMap(_.reviewer).groupBy(_.userName)
-
-    val reviewerStats = (a.map {
-      case (reviewer, state) =>
-        (reviewer -> state.groupBy(_.completed).map(s => (s._1 -> s._2.size)))
-    }).toSeq
+  private def getLeaderBoard(
+    openReviews: Seq[ReviewResponse],
+    recentClosedReviews: Seq[ReviewResponse],
+    recentOpenReviews: Seq[ReviewResponse],
+    num: Int = 5): (Seq[ReviewLeaderUser], Seq[ReviewLeaderUser]) = {
 
     val users = client.getUsers
 
-    val losers = reviewerStats
-      .sortBy(_._2.get(true)).reverse // completed reviews (secondary sort)
-      .sortBy(_._2.get(false)).reverse // open reviews (primary sort)
-      .filter(it => users.contains(it._1) || it._2.get(false).nonEmpty) // remove deleted users w/0 open
+    val recentReviews = (recentClosedReviews ++ recentOpenReviews).flatMap(_.reviewer).groupBy(_.userName)
+    val recentCompletedReviewCountByUser = recentReviews.map {
+      case (reviewer, states) =>
+        reviewer -> states.foldLeft(0) { (sum, state) => if (state.completed) sum + 1 else sum }
+    }
 
-    (
-      losers.reverse.take(5).map {
-        case (u, stats) =>
-          if (users.contains(u))
-            new ReviewLeaderUser(u, users(u).avatarUrl, numOpen(stats), numComplete(stats))
-          else
-            ReviewLeaderMissingUser(u, numOpen(stats), numComplete(stats))
-      },
-      losers.take(5).map {
-        case (u, stats) =>
-          if (users.contains(u))
-            new ReviewLeaderUser(u, users(u).avatarUrl, numOpen(stats), numComplete(stats))
-          else
-            ReviewLeaderMissingUser(u, numOpen(stats), numComplete(stats))
-      })
-  }
+    val allOpenReviewsByUser = openReviews.flatMap(_.reviewer).groupBy(_.userName)
+    val openReviewCountByUser = allOpenReviewsByUser.map {
+      case (reviewer, states) =>
+        reviewer -> states.foldLeft(0) { (sum, state) => if (!state.completed) sum + 1 else sum }
+    }
 
-  def numOpen(stats: Map[Boolean, Int]): Int = {
-    stats.getOrElse(false, 0)
-  }
+    val leaderboard: Seq[ReviewLeaderUser] = openReviewCountByUser.map {
+      case (user, numOpen) =>
+        val numComplete = recentCompletedReviewCountByUser.getOrElse(user, 0)
 
-  def numComplete(stats: Map[Boolean, Int]): Int = {
-    stats.getOrElse(true, 0)
+        if (users.contains(user)) {
+          ReviewLeaderUser(user, users(user).avatarUrl, numOpen, numComplete)
+        } else {
+          ReviewLeaderMissingUser(user, numOpen, numComplete)
+        }
+    }.toVector
+      .sortBy(_.completeReviews).reverse // completed reviews (secondary sort)
+      .sortBy(_.openReviews) // open reviews (primary sort)
+      .filter(user => users.contains(user.name) || user.openReviews == 0) // remove deleted users w/0 open
+
+    val winners = leaderboard.take(5)
+    val losers = leaderboard.takeRight(5).reverse
+
+    (winners, losers)
   }
 
   def ReviewLeaderMissingUser(name: String, openReviews: Int, completeReviews: Int) = ReviewLeaderUser(
