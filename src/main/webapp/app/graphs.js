@@ -34,7 +34,7 @@ app.directive('bugRateChart', function() {
           var colHeight = val / maxValue * CHART_HEIGHT;
           var hOffset = colWidth * (3 * rowIdx + colIdx);
           var vOffset = CHART_HEIGHT - colHeight;
-          console.log(val, colHeight, vOffset);
+
           var col = chart.rect(hOffset,
               vOffset,
               colWidth,
@@ -56,8 +56,6 @@ app.directive('bugChart', function() {
     link: function(scope, element, attrs) {
       var data = scope.data;
 
-      console.log("Got data", data);
-
       var chart = createChart(element[0]);
 
       var maxValue = Math.max.apply(null, data.map(function (row) {
@@ -67,7 +65,6 @@ app.directive('bugChart', function() {
 
       var strokeWidth = 10;
       var points = data.map(function (row, idx) {
-        console.log(row, idx);
         var val = row[1];
         return { x: hOffset * idx,
           y: CHART_HEIGHT - (val / maxValue) * CHART_HEIGHT };
