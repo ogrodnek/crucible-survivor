@@ -11,7 +11,6 @@ function LeaderController($scope) {
   $scope.updateDate = leaderStats.updateDate;
 
   var os = $scope.openReviewData;
-  console.log("os", os);
   var delta = os[os.length -1][1] - os[os.length -2][1];
 
 
