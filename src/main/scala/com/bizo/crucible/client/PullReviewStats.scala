@@ -174,7 +174,9 @@ object PullReviewStats {
     recentOpenReviews: Seq[ReviewResponse],
     num: Int = 5): (Seq[ReviewLeaderUser], Seq[ReviewLeaderUser]) = {
 
-    val users = client.getUsers
+    val users = client.getUsers.map { case (name, user) =>
+      (name, user.copy(avatarUrl = forceRetroStyle(user.avatarUrl)))
+    }
 
     val recentReviews = (recentClosedReviews ++ recentOpenReviews).flatMap(_.reviewer).groupBy(_.userName)
     val recentCompletedReviewCountByUser = recentReviews.map {
@@ -206,6 +208,14 @@ object PullReviewStats {
     val losers = leaderboard.takeRight(5).reverse
 
     (winners, losers)
+  }
+  
+  val defaultAvatar="""(.+d=)([^&]+)(.*)""".r
+  def forceRetroStyle(avatarUrl: String) = {
+    avatarUrl match {
+      case defaultAvatar(url, template, otherParams) => s"${url}retro${otherParams}"
+      case _ => avatarUrl
+    }
   }
 
   def ReviewLeaderMissingUser(name: String, openReviews: Int, completeReviews: Int) = ReviewLeaderUser(
