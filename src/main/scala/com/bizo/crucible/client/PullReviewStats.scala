@@ -200,7 +200,7 @@ object PullReviewStats {
     }.toVector
       .sortBy(_.completeReviews).reverse // completed reviews (secondary sort)
       .sortBy(_.openReviews) // open reviews (primary sort)
-      .filter(user => users.contains(user.name) || user.openReviews == 0) // remove deleted users w/0 open
+      .filter(user => users.contains(user.name) || user.openReviews > 0) // remove deleted users w/0 open
 
     val winners = leaderboard.take(5)
     val losers = leaderboard.takeRight(5).reverse
