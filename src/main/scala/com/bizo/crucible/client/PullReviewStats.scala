@@ -12,7 +12,7 @@ import net.liftweb.json.Serialization.write
 import java.util.TimeZone
 
 /**
- * Pull review stats from Crucible and pushes to S3.
+ * Pull review stats from Crucible.
  *
  * Must set the following Environment variables (or java System properties):
  *
@@ -33,7 +33,7 @@ object PullReviewStats {
       args(0)
     }
 
-    val (openReviewsToConsider, openReviewDetails) = pullDetails("Review", 0)
+    val (openReviewsToConsider, openReviewDetails) = pullDetails("Review")
     val (_, recentOpenReviewDetails) = pullDetails("Review", 1)
     val (closedReviewsToConsider, closedReviewDetails) = pullDetails("Closed", 1)
 
@@ -67,7 +67,7 @@ object PullReviewStats {
     of
   }
 
-  private def pullDetails(reviewState: String, numMonths: Int) = {
+  private def pullDetails(reviewState: String, numMonths: Int = 0) = {
     logger.info("Pulling review for state: " + reviewState)
 
     val ret = client.getReviewsInState(reviewState)
