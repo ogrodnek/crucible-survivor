@@ -4,17 +4,13 @@ import com.bizo.crucible.client.model._
 import java.io.FileOutputStream
 import java.io.OutputStreamWriter
 import java.text.SimpleDateFormat
-import java.util.Calendar
 import java.util.Date
 import java.util.logging.Logger
 import net.liftweb.json.DefaultFormats
 import net.liftweb.json.Serialization.write
 import java.util.TimeZone
 import com.bizo.crucible.client._
-import java.util.Calendar.HOUR_OF_DAY
-import java.util.Calendar.MILLISECOND
-import java.util.Calendar.MINUTE
-import java.util.Calendar.SECOND
+import DateUtils._
 
 /**
  * Pull review stats from Crucible.
@@ -79,9 +75,8 @@ object PullReviewStats {
 
     logger.info("Found %d reviews for state %s..".format(ret.size, reviewState))
 
-    val c = Calendar.getInstance()
-    c.add(Calendar.MONTH, -(numMonths))
-    val cutOff = c.getTime
+    
+    val cutOff = monthsAgo(numMonths)
     val count = new java.util.concurrent.atomic.AtomicInteger
 
     val reviewsToConsider =
@@ -118,45 +113,12 @@ object PullReviewStats {
     r.map(s => Array(s._1, s._2))
   }
 
-  def getDaysUntilToday(d: Date): List[Date] = {
-    getDaysUntil(d, new java.util.Date())
-  }
-
-  def clearTimeComponents(d: Date): Date = {
-    import Calendar._
-    val c = Calendar.getInstance()
-    c.setTime(d)
-
-    for (f <- Seq(HOUR_OF_DAY, MINUTE, SECOND, MILLISECOND)) {
-      c.set(f, 0)
-    }
-
-    c.getTime
-  }
-
-  private def getDaysUntil(_d: Date, _end: Date): List[Date] = {
-    val end = clearTimeComponents(_end)
-    val d = clearTimeComponents(_d)
-
-    if (d.compareTo(end) <= 0) {
-      val next = Calendar.getInstance
-      next.setTime(d)
-      next.add(Calendar.DAY_OF_YEAR, 1)
-
-      d :: getDaysUntil(next.getTime, end)
-    } else {
-      List()
-    }
-  }
-
   private def getOpenCloseStats(open: Seq[ReviewSummary], closed: Seq[ReviewSummary]): Seq[Array[Any]] = {
     val openStats = getReviewStatsByDate(open, { _.createDate })
     val closedStats = getReviewStatsByDate(closed, { _.closeDate.get })
 
     val dates = (0 to 7).reverse map { v =>
-      val cal = Calendar.getInstance
-      cal.add(Calendar.DAY_OF_YEAR, -(v))
-      reportDateFormat.format(cal.getTime)
+      reportDateFormat.format(daysAgo(v))
     }
 
     dates map { d =>
