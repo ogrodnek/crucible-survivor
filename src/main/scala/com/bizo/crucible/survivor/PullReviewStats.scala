@@ -1,4 +1,4 @@
-package com.bizo.crucible.client
+package com.bizo.crucible.survivor
 
 import com.bizo.crucible.client.model._
 import java.io.FileOutputStream
@@ -10,6 +10,11 @@ import java.util.logging.Logger
 import net.liftweb.json.DefaultFormats
 import net.liftweb.json.Serialization.write
 import java.util.TimeZone
+import com.bizo.crucible.client._
+import java.util.Calendar.HOUR_OF_DAY
+import java.util.Calendar.MILLISECOND
+import java.util.Calendar.MINUTE
+import java.util.Calendar.SECOND
 
 /**
  * Pull review stats from Crucible.
