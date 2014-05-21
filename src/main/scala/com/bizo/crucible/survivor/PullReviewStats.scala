@@ -11,6 +11,9 @@ import net.liftweb.json.Serialization.write
 import java.util.TimeZone
 import com.bizo.crucible.client._
 import DateUtils._
+import com.bizo.crucible.survivor.scoring.Scoring
+import com.bizo.crucible.survivor.scoring.impl.CompoundOpenClosedScoring
+import com.bizo.crucible.survivor.scoring.LeaderBoardRow
 
 /**
  * Pull review stats from Crucible.
@@ -140,42 +143,28 @@ object PullReviewStats {
     recentClosedReviews: Seq[ReviewResponse],
     recentOpenReviews: Seq[ReviewResponse],
     num: Int = 5): (Seq[ReviewLeaderUser], Seq[ReviewLeaderUser]) = {
+    
+    val scoring: Scoring = new CompoundOpenClosedScoring
 
     val users = client.getUsers.map { case (name, user) =>
       (name, user.copy(avatarUrl = forceRetroStyle(user.avatarUrl)))
     }
-
-    val recentReviews = (recentClosedReviews ++ recentOpenReviews).flatMap(_.reviewer).groupBy(_.userName)
-    val recentCompletedReviewCountByUser = recentReviews.map {
-      case (reviewer, states) =>
-        reviewer -> states.foldLeft(0) { (sum, state) => if (state.completed) sum + 1 else sum }
+    
+    val board = scoring.score(users.values.toSeq, openReviews, recentClosedReviews, recentOpenReviews, num)
+    
+    def toLeaderUser(r: LeaderBoardRow) = {
+      if (users.contains(r.name)) {
+        ReviewLeaderUser(r.name, users(r.name).avatarUrl, r.score)
+      } else {
+        ReviewLeaderUser(r.name, missingAvatar, r.score)
+      }
     }
 
-    val allOpenReviewsByUser = openReviews.flatMap(_.reviewer).groupBy(_.userName)
-    val openReviewCountByUser = allOpenReviewsByUser.map {
-      case (reviewer, states) =>
-        reviewer -> states.foldLeft(0) { (sum, state) => if (!state.completed) sum + 1 else sum }
-    }
-
-    val leaderboard: Seq[ReviewLeaderUser] = openReviewCountByUser.map {
-      case (user, numOpen) =>
-        val numComplete = recentCompletedReviewCountByUser.getOrElse(user, 0)
-
-        if (users.contains(user)) {
-          ReviewLeaderUser(user, users(user).avatarUrl, numOpen, numComplete)
-        } else {
-          ReviewLeaderMissingUser(user, numOpen, numComplete)
-        }
-    }.toVector
-      .sortBy(_.completeReviews).reverse // completed reviews (secondary sort)
-      .sortBy(_.openReviews) // open reviews (primary sort)
-      .filter(user => users.contains(user.name) || user.openReviews > 0) // remove deleted users w/0 open
-
-    val winners = leaderboard.take(5)
-    val losers = leaderboard.takeRight(5).reverse
-
-    (winners, losers)
+    (board.rankedWinners.map(toLeaderUser),
+        board.rankedLosers.map(toLeaderUser))
   }
+  
+  val missingAvatar = "http://gravatar.com/avatar/00000000000000000000000000000000?d=retro&s=48"
   
   val defaultAvatar="""(.+d=)([^&]+)(.*)""".r
   def forceRetroStyle(avatarUrl: String) = {
@@ -184,13 +173,13 @@ object PullReviewStats {
       case _ => avatarUrl
     }
   }
-
-  def ReviewLeaderMissingUser(name: String, openReviews: Int, completeReviews: Int) = ReviewLeaderUser(
-    name,
-    "http://gravatar.com/avatar/00000000000000000000000000000000?d=retro&s=48",
-    openReviews,
-    completeReviews)
 }
+
+case class ReviewLeaderUser(
+  name: String,
+  avatarUrl: String,
+  score: String
+)  
 
 case class ReviewLeaderStats(
   fame: Seq[ReviewLeaderUser],
@@ -198,6 +187,5 @@ case class ReviewLeaderStats(
   totalOpenReviews: Int,
   updateDate: String,
   openCloseStats: Seq[Array[Any]],
-  openCountStats: Seq[Array[Any]])
-
-case class ReviewLeaderUser(name: String, avatarUrl: String, openReviews: Int, completeReviews: Int)
+  openCountStats: Seq[Array[Any]]
+)
