@@ -139,16 +139,16 @@ object PullReviewStats {
   }
 
   private def getLeaderBoard(
-    openReviews: Seq[ReviewResponse],
-    recentClosedReviews: Seq[ReviewResponse],
-    recentOpenReviews: Seq[ReviewResponse],
+    openReviews: Seq[ReviewDetails],
+    recentClosedReviews: Seq[ReviewDetails],
+    recentOpenReviews: Seq[ReviewDetails],
     num: Int = 5): (Seq[ReviewLeaderUser], Seq[ReviewLeaderUser]) = {
     
     val scoring: Scoring = new CompoundOpenClosedScoring
 
-    val users = client.getUsers.map { case (name, user) =>
-      (name, user.copy(avatarUrl = forceRetroStyle(user.avatarUrl)))
-    }
+    val users = client.getUsers.map { u =>
+      (u.userName, u.copy(avatarUrl = forceRetroStyle(u.avatarUrl)))
+    } toMap
     
     val board = scoring.score(users.values.toSeq, openReviews, recentClosedReviews, recentOpenReviews, num)
     

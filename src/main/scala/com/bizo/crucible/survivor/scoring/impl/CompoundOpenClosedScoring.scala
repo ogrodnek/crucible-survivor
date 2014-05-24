@@ -15,20 +15,22 @@ import com.bizo.crucible.survivor.scoring._
  */
 class CompoundOpenClosedScoring extends Scoring {
   override def score(activeUsers: Seq[User],
-      openReviews: Seq[ReviewResponse],
-      recentClosedReviews: Seq[ReviewResponse],
-      recentOpenReviews: Seq[ReviewResponse],
+      openReviews: Seq[ReviewDetails],
+      recentClosedReviews: Seq[ReviewDetails],
+      recentOpenReviews: Seq[ReviewDetails],
       num: Int): LeaderBoard = {
 
     val users = activeUsers.map(u => (u.userName -> u)).toMap
 
-    val recentReviews = (recentClosedReviews ++ recentOpenReviews).flatMap(_.reviewer).groupBy(_.userName)
+    val recentReviews = (recentClosedReviews ++ recentOpenReviews).flatMap(_.reviewers).groupBy(_.userName)
+    
+    
     val recentCompletedReviewCountByUser = recentReviews.map {
       case (reviewer, states) =>
         reviewer -> states.foldLeft(0) { (sum, state) => if (state.completed) sum + 1 else sum }
     }
 
-    val allOpenReviewsByUser = openReviews.flatMap(_.reviewer).groupBy(_.userName)
+    val allOpenReviewsByUser = openReviews.flatMap(_.reviewers).groupBy(_.userName)
     val openReviewCountByUser = allOpenReviewsByUser.map {
       case (reviewer, states) =>
         reviewer -> states.foldLeft(0) { (sum, state) => if (!state.completed) sum + 1 else sum }

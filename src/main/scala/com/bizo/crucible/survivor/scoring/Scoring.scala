@@ -14,8 +14,8 @@ case class LeaderBoard(
 
 trait Scoring {
   def score(users: Seq[User],
-      openReviews: Seq[ReviewResponse],
-      recentClosedReviews: Seq[ReviewResponse],
-      recentOpenReviews: Seq[ReviewResponse],
+      openReviews: Seq[ReviewDetails],
+      recentClosedReviews: Seq[ReviewDetails],
+      recentOpenReviews: Seq[ReviewDetails],
       num: Int): LeaderBoard
 }
