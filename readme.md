@@ -39,9 +39,9 @@ python -m SimpleHTTPServer
   The configuration is taken from the environment, the following environment variables must be set:
   
   * Crucible configuration
-    * CRUCIBLE_HOST (hostname of your crucible server)
-    * CRUCIBLE_USER
-    * CRUCIBLE_PASS
+    * `CRUCIBLE_HOST` (hostname of your crucible server)
+    * `CRUCIBLE_USER`
+    * `CRUCIBLE_PASS`
 
 ### Running Stats Generation
   `./gen-stats.sh <outfile>`
