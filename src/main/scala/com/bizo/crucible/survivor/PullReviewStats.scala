@@ -38,8 +38,9 @@ object PullReviewStats {
     }
 
     val (openReviewsToConsider, openReviewDetails) = pullDetails("Review")
-    val (_, recentOpenReviewDetails) = pullDetails("Review", 1)
     val (closedReviewsToConsider, closedReviewDetails) = pullDetails("Closed", 1)
+    
+    val recentOpenReviewDetails = filterReviewsByMonth(openReviewDetails, 1)    
 
     val (winners, losers) = getLeaderBoard(openReviewDetails, closedReviewDetails, recentOpenReviewDetails)
 
@@ -70,6 +71,17 @@ object PullReviewStats {
 
     of
   }
+  
+  private def filterReviewsByMonth[T<:Review](reviews: Seq[T], numMonths: Int): Seq[T] = {
+    if (numMonths <= 0)
+      reviews
+    else {
+      val cutOff = monthsAgo(numMonths)      
+      reviews filter { r =>
+        cutOff.compareTo(r.createDate) < 0
+      }
+    }
+  }
 
   private def pullDetails(reviewState: String, numMonths: Int = 0) = {
     logger.info("Pulling review for state: " + reviewState)
@@ -78,19 +90,10 @@ object PullReviewStats {
 
     logger.info("Found %d reviews for state %s..".format(ret.size, reviewState))
 
-    
-    val cutOff = monthsAgo(numMonths)
-    val count = new java.util.concurrent.atomic.AtomicInteger
-
-    val reviewsToConsider =
-      if (numMonths <= 0)
-        ret
-      else
-        (ret filter { r =>
-          cutOff.compareTo(r.createDate) < 0
-        })
-
+    val reviewsToConsider = filterReviewsByMonth(ret, numMonths)
     logger.info("considering %d reviews for last %d month(s).".format(reviewsToConsider.size, numMonths))
+    
+    val count = new java.util.concurrent.atomic.AtomicInteger    
 
     val reviewDetails = (reviewsToConsider.par map { r =>
       System.err.print(".")
