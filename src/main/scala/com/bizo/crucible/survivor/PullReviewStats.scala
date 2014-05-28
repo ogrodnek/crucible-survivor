@@ -36,8 +36,11 @@ object PullReviewStats {
     } else {
       args(0)
     }
-
-    val (openReviewsToConsider, openReviewDetails) = pullDetails(ReviewState.Review)
+    
+    logger.info("Pulling open reviews....")
+    val allOpen = client.getReviewDetailsWithFilter(PredefinedReviewFilter.global.allOpenReviews)
+    val (openReviewsToConsider, openReviewDetails) = (allOpen, allOpen)
+    
     val (closedReviewsToConsider, closedReviewDetails) = pullDetails(ReviewState.Closed, 1)
     
     val recentOpenReviewDetails = filterReviewsByMonth(openReviewDetails, 1)    
@@ -108,7 +111,7 @@ object PullReviewStats {
 
   val reportDateFormat = new SimpleDateFormat("yyyy-MM-dd")
 
-  private def getOpenCountStats(open: Seq[ReviewSummary], closed: Seq[ReviewSummary], numDays: Int = 14): Seq[Array[Any]] = {
+  private def getOpenCountStats(open: Seq[Review], closed: Seq[Review], numDays: Int = 14): Seq[Array[Any]] = {
     val dates = (open.flatMap(r => getDaysUntilToday(r.createDate).map(reportDateFormat.format(_))) ++
       closed.flatMap(r => getDaysUntil(r.createDate, r.closeDate.get)).map(reportDateFormat.format(_)))
 
