@@ -14,6 +14,7 @@ import DateUtils._
 import com.bizo.crucible.survivor.scoring.Scoring
 import com.bizo.crucible.survivor.scoring.impl.CompoundOpenClosedScoring
 import com.bizo.crucible.survivor.scoring.LeaderBoardRow
+import com.sun.corba.se.impl.ior.OldJIDLObjectKeyTemplate
 
 /**
  * Pull review stats from Crucible.
@@ -36,12 +37,22 @@ object PullReviewStats {
     } else {
       args(0)
     }
-
-    val (openReviewsToConsider, openReviewDetails) = pullDetails("Review")
-    val (closedReviewsToConsider, closedReviewDetails) = pullDetails("Closed", 1)
     
-    val recentOpenReviewDetails = filterReviewsByMonth(openReviewDetails, 1)    
-
+    logger.info("Pulling open reviews....")
+    val openReviewDetails = client.getReviewDetailsWithFilter(PredefinedReviewFilter.global.allOpenReviews)
+    val recentOpenReviewDetails = filterReviewsByMonth(openReviewDetails, 1)
+    
+    val closedReviewDetails = {
+      logger.info("Pulling closed reviews...")
+      val f = ReviewFilter(states = Seq(ReviewState.Closed), fromDate = Some(monthsAgo(1).getTime))
+      
+      // API seems to return reviews that have had any activiy in past month, but what we want is created
+      // in last month, so still need to filter
+      filterReviewsByMonth(client.getReviewDetailsWithFilter(f), 1)
+    }
+    
+    logger.info("Generating leaderboard...")
+    
     val (winners, losers) = getLeaderBoard(openReviewDetails, closedReviewDetails, recentOpenReviewDetails)
 
     val df = new SimpleDateFormat("E MM.dd hh:mm a")
@@ -50,10 +61,10 @@ object PullReviewStats {
     val stats = new ReviewLeaderStats(
       winners,
       losers,
-      openReviewsToConsider.size,
+      openReviewDetails.size,
       df.format(new java.util.Date),
-      getOpenCloseStats(openReviewsToConsider, closedReviewsToConsider),
-      getOpenCountStats(openReviewsToConsider, closedReviewsToConsider))
+      getOpenCloseStats(openReviewDetails, closedReviewDetails),
+      getOpenCountStats(openReviewDetails, closedReviewDetails))
 
     val out = writeToFile(outputFile, stats)
     System.err.println("stats written to: " + out.getAbsolutePath)
@@ -83,32 +94,10 @@ object PullReviewStats {
     }
   }
 
-  private def pullDetails(reviewState: String, numMonths: Int = 0) = {
-    logger.info("Pulling review for state: " + reviewState)
-
-    val ret = client.getReviewsInState(reviewState)
-
-    logger.info("Found %d reviews for state %s..".format(ret.size, reviewState))
-
-    val reviewsToConsider = filterReviewsByMonth(ret, numMonths)
-    logger.info("considering %d reviews for last %d month(s).".format(reviewsToConsider.size, numMonths))
-    
-    val count = new java.util.concurrent.atomic.AtomicInteger    
-
-    val reviewDetails = (reviewsToConsider.par map { r =>
-      System.err.print(".")
-      if (count.incrementAndGet() % 50 == 0) {
-        System.err.println()
-      }
-      client.getReview(r.permaId)
-    }).seq
-
-    (reviewsToConsider, reviewDetails)
-  }
 
   val reportDateFormat = new SimpleDateFormat("yyyy-MM-dd")
 
-  private def getOpenCountStats(open: Seq[ReviewSummary], closed: Seq[ReviewSummary], numDays: Int = 14): Seq[Array[Any]] = {
+  private def getOpenCountStats(open: Seq[Review], closed: Seq[Review], numDays: Int = 14): Seq[Array[Any]] = {
     val dates = (open.flatMap(r => getDaysUntilToday(r.createDate).map(reportDateFormat.format(_))) ++
       closed.flatMap(r => getDaysUntil(r.createDate, r.closeDate.get)).map(reportDateFormat.format(_)))
 
@@ -119,7 +108,7 @@ object PullReviewStats {
     r.map(s => Array(s._1, s._2))
   }
 
-  private def getOpenCloseStats(open: Seq[ReviewSummary], closed: Seq[ReviewSummary]): Seq[Array[Any]] = {
+  private def getOpenCloseStats(open: Seq[Review], closed: Seq[Review]): Seq[Array[Any]] = {
     val openStats = getReviewStatsByDate(open, { _.createDate })
     val closedStats = getReviewStatsByDate(closed, { _.closeDate.get })
 
@@ -132,7 +121,7 @@ object PullReviewStats {
     }
   }
 
-  private def getReviewStatsByDate(reviews: Seq[ReviewSummary], df: (ReviewSummary) => Date, num: Int = 7): Map[String, Int] = {
+  private def getReviewStatsByDate(reviews: Seq[Review], df: (Review) => Date, num: Int = 7): Map[String, Int] = {
     val a = reviews.map(df).map(reportDateFormat.format(_)).groupBy { r => r }
 
     (a.map {
