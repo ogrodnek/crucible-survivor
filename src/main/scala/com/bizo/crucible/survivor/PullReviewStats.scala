@@ -14,6 +14,7 @@ import DateUtils._
 import com.bizo.crucible.survivor.scoring.Scoring
 import com.bizo.crucible.survivor.scoring.impl.CompoundOpenClosedScoring
 import com.bizo.crucible.survivor.scoring.LeaderBoardRow
+import com.sun.corba.se.impl.ior.OldJIDLObjectKeyTemplate
 
 /**
  * Pull review stats from Crucible.
@@ -40,11 +41,20 @@ object PullReviewStats {
     logger.info("Pulling open reviews....")
     val allOpen = client.getReviewDetailsWithFilter(PredefinedReviewFilter.global.allOpenReviews)
     val (openReviewsToConsider, openReviewDetails) = (allOpen, allOpen)
-    
-    val (closedReviewsToConsider, closedReviewDetails) = pullDetails(ReviewState.Closed, 1)
-    
-    val recentOpenReviewDetails = filterReviewsByMonth(openReviewDetails, 1)    
 
+    val recentOpenReviewDetails = filterReviewsByMonth(openReviewDetails, 1)
+    
+    val recentClosed = {
+      logger.info("Pulling closed reviews...")
+      val f = ReviewFilter(states = Seq(ReviewState.Closed), fromDate = Some(monthsAgo(1).getTime))
+      
+      // API seems to return reviews that have had any activiy in past month, but what we want is created
+      // in last month, so still need to filter
+      filterReviewsByMonth(client.getReviewDetailsWithFilter(f), 1)
+    }
+    
+    val (closedReviewsToConsider, closedReviewDetails) = (recentClosed, recentClosed)
+    
     val (winners, losers) = getLeaderBoard(openReviewDetails, closedReviewDetails, recentOpenReviewDetails)
 
     val df = new SimpleDateFormat("E MM.dd hh:mm a")
@@ -86,28 +96,6 @@ object PullReviewStats {
     }
   }
 
-  private def pullDetails(reviewState: ReviewState, numMonths: Int = 0) = {
-    logger.info("Pulling review for state: " + reviewState)
-
-    val ret = client.getReviewsInState(reviewState)
-
-    logger.info("Found %d reviews for state %s..".format(ret.size, reviewState))
-
-    val reviewsToConsider = filterReviewsByMonth(ret, numMonths)
-    logger.info("considering %d reviews for last %d month(s).".format(reviewsToConsider.size, numMonths))
-    
-    val count = new java.util.concurrent.atomic.AtomicInteger    
-
-    val reviewDetails = (reviewsToConsider.par map { r =>
-      System.err.print(".")
-      if (count.incrementAndGet() % 50 == 0) {
-        System.err.println()
-      }
-      client.getReview(r.permaId)
-    }).seq
-
-    (reviewsToConsider, reviewDetails)
-  }
 
   val reportDateFormat = new SimpleDateFormat("yyyy-MM-dd")
 
