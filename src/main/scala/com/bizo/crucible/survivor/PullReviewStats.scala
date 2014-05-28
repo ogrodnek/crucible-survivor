@@ -39,12 +39,10 @@ object PullReviewStats {
     }
     
     logger.info("Pulling open reviews....")
-    val allOpen = client.getReviewDetailsWithFilter(PredefinedReviewFilter.global.allOpenReviews)
-    val (openReviewsToConsider, openReviewDetails) = (allOpen, allOpen)
-
+    val openReviewDetails = client.getReviewDetailsWithFilter(PredefinedReviewFilter.global.allOpenReviews)
     val recentOpenReviewDetails = filterReviewsByMonth(openReviewDetails, 1)
     
-    val recentClosed = {
+    val closedReviewDetails = {
       logger.info("Pulling closed reviews...")
       val f = ReviewFilter(states = Seq(ReviewState.Closed), fromDate = Some(monthsAgo(1).getTime))
       
@@ -53,7 +51,7 @@ object PullReviewStats {
       filterReviewsByMonth(client.getReviewDetailsWithFilter(f), 1)
     }
     
-    val (closedReviewsToConsider, closedReviewDetails) = (recentClosed, recentClosed)
+    logger.info("Generating leaderboard...")
     
     val (winners, losers) = getLeaderBoard(openReviewDetails, closedReviewDetails, recentOpenReviewDetails)
 
@@ -63,10 +61,10 @@ object PullReviewStats {
     val stats = new ReviewLeaderStats(
       winners,
       losers,
-      openReviewsToConsider.size,
+      openReviewDetails.size,
       df.format(new java.util.Date),
-      getOpenCloseStats(openReviewsToConsider, closedReviewsToConsider),
-      getOpenCountStats(openReviewsToConsider, closedReviewsToConsider))
+      getOpenCloseStats(openReviewDetails, closedReviewDetails),
+      getOpenCountStats(openReviewDetails, closedReviewDetails))
 
     val out = writeToFile(outputFile, stats)
     System.err.println("stats written to: " + out.getAbsolutePath)
