@@ -37,8 +37,8 @@ object PullReviewStats {
       args(0)
     }
 
-    val (openReviewsToConsider, openReviewDetails) = pullDetails("Review")
-    val (closedReviewsToConsider, closedReviewDetails) = pullDetails("Closed", 1)
+    val (openReviewsToConsider, openReviewDetails) = pullDetails(ReviewState.Review)
+    val (closedReviewsToConsider, closedReviewDetails) = pullDetails(ReviewState.Closed, 1)
     
     val recentOpenReviewDetails = filterReviewsByMonth(openReviewDetails, 1)    
 
@@ -83,7 +83,7 @@ object PullReviewStats {
     }
   }
 
-  private def pullDetails(reviewState: String, numMonths: Int = 0) = {
+  private def pullDetails(reviewState: ReviewState, numMonths: Int = 0) = {
     logger.info("Pulling review for state: " + reviewState)
 
     val ret = client.getReviewsInState(reviewState)
@@ -119,7 +119,7 @@ object PullReviewStats {
     r.map(s => Array(s._1, s._2))
   }
 
-  private def getOpenCloseStats(open: Seq[ReviewSummary], closed: Seq[ReviewSummary]): Seq[Array[Any]] = {
+  private def getOpenCloseStats(open: Seq[Review], closed: Seq[Review]): Seq[Array[Any]] = {
     val openStats = getReviewStatsByDate(open, { _.createDate })
     val closedStats = getReviewStatsByDate(closed, { _.closeDate.get })
 
@@ -132,7 +132,7 @@ object PullReviewStats {
     }
   }
 
-  private def getReviewStatsByDate(reviews: Seq[ReviewSummary], df: (ReviewSummary) => Date, num: Int = 7): Map[String, Int] = {
+  private def getReviewStatsByDate(reviews: Seq[Review], df: (Review) => Date, num: Int = 7): Map[String, Int] = {
     val a = reviews.map(df).map(reportDateFormat.format(_)).groupBy { r => r }
 
     (a.map {

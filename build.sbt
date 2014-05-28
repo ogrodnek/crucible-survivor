@@ -9,7 +9,7 @@ scalaVersion := "2.10.3"
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-language:_")
 
 libraryDependencies ++= Seq(
-  "com.bizo" %% "crucible-client-scala" % "1.0.1",
+  "com.bizo" %% "crucible-client-scala" % "1.1.0",
   "com.sun.jersey" % "jersey-bundle" % "1.9.1",
   "javax.ws.rs" % "jsr311-api" % "1.1.1",
   "net.liftweb" % "lift-json_2.10" % "2.5",
