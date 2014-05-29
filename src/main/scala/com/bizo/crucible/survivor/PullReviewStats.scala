@@ -14,7 +14,7 @@ import DateUtils._
 import com.bizo.crucible.survivor.scoring.Scoring
 import com.bizo.crucible.survivor.scoring.impl.CompoundOpenClosedScoring
 import com.bizo.crucible.survivor.scoring.LeaderBoardRow
-import com.sun.corba.se.impl.ior.OldJIDLObjectKeyTemplate
+import com.bizo.crucible.survivor.scoring.impl.TimeWeightedOpenClosedScoring
 
 /**
  * Pull review stats from Crucible.
@@ -53,7 +53,8 @@ object PullReviewStats {
     
     logger.info("Generating leaderboard...")
     
-    val (winners, losers) = getLeaderBoard(openReviewDetails, closedReviewDetails, recentOpenReviewDetails)
+    val scoring: Scoring = new TimeWeightedOpenClosedScoring    
+    val (winners, losers) = getLeaderBoard(scoring, openReviewDetails, closedReviewDetails, recentOpenReviewDetails)
 
     val df = new SimpleDateFormat("E MM.dd hh:mm a")
     df.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));
@@ -131,12 +132,11 @@ object PullReviewStats {
   }
 
   private def getLeaderBoard(
+    scoring: Scoring,
     openReviews: Seq[ReviewDetails],
     recentClosedReviews: Seq[ReviewDetails],
     recentOpenReviews: Seq[ReviewDetails],
     num: Int = 5): (Seq[ReviewLeaderUser], Seq[ReviewLeaderUser]) = {
-    
-    val scoring: Scoring = new CompoundOpenClosedScoring
 
     val users = client.getUsers.map { u =>
       (u.userName, u.copy(avatarUrl = forceRetroStyle(u.avatarUrl)))
