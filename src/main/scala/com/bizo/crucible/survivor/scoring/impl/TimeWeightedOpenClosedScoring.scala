@@ -35,7 +35,7 @@ class TimeWeightedOpenClosedScoring(now: () => Long = System.currentTimeMillis) 
     def fameScore(reviews: Seq[(ReviewerState, ReviewDetails)]): Double = {
       val penalties = reviews.filter {
         case (reviewer, _) =>
-          reviewer.completionStatusChangeDate.map(_ > oneWeekAgo).getOrElse(true)
+          reviewer.completionStatusChangeDate.map(_ < oneWeekAgo).getOrElse(true)
       }.map {
         case (reviewer, review) =>
           openMs(reviewer, review)
