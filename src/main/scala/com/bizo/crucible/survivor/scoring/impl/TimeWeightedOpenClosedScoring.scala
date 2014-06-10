@@ -64,7 +64,7 @@ class TimeWeightedOpenClosedScoring(now: () => Long = System.currentTimeMillis) 
     }.groupBy(_._1.userName).map {
       case (reviewerName, reviews) =>
         val mostRecentCompletionTime = reviews.flatMap(_._1.completionStatusChangeDate).max
-
+        
         (reviewerName, fameScore(reviews), shameScore(reviews), mostRecentCompletionTime)
     }.toIndexedSeq
 
@@ -76,7 +76,10 @@ class TimeWeightedOpenClosedScoring(now: () => Long = System.currentTimeMillis) 
         LeaderBoardRow(reviewerName, formatHours(fameScore))
     }
 
-    val shameBoard = scoredReviewers.sortBy {
+    val shameBoard = scoredReviewers.filter {
+      case (_, _, shameScore, mostRecentCompletionTime) =>
+        shameScore > 0      
+    }.sortBy {
       case (_, _, shameScore, mostRecentCompletionTime) =>
         (-shameScore, mostRecentCompletionTime)
     }.take(num).map {
