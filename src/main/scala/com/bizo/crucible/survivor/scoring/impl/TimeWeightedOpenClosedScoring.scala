@@ -63,7 +63,9 @@ class TimeWeightedOpenClosedScoring(now: () => Long = System.currentTimeMillis) 
       review.reviewers.map(_ -> review)
     }.groupBy(_._1.userName).map {
       case (reviewerName, reviews) =>
-        val mostRecentCompletionTime = reviews.flatMap(_._1.completionStatusChangeDate).max
+        val mostRecentCompletionTime = reviews.map { case (state, _) =>
+          state.completionStatusChangeDate.getOrElse(0L)
+        }.max
         
         (reviewerName, fameScore(reviews), shameScore(reviews), mostRecentCompletionTime)
     }.toIndexedSeq
