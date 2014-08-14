@@ -80,7 +80,7 @@ class TimeWeightedOpenClosedScoring(now: () => Long = System.currentTimeMillis) 
 
     val shameBoard = scoredReviewers.filter {
       case (_, _, shameScore, mostRecentCompletionTime) =>
-        shameScore > 0      
+        shameScore > 2
     }.sortBy {
       case (_, _, shameScore, mostRecentCompletionTime) =>
         (-shameScore, mostRecentCompletionTime)
