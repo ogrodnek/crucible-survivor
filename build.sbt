@@ -16,6 +16,7 @@ libraryDependencies ++= Seq(
   "net.liftweb" % "lift-json-ext_2.10" % "2.5",
   "commons-io" % "commons-io" % "2.4",
   "junit" % "junit" % "4.10" % "test",
+  "org.scalatest" %% "scalatest" % "2.2.1" % "test",
   "com.novocode" % "junit-interface" % "0.10-M4" % "test"
 )
 
