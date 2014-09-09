@@ -42,19 +42,25 @@ object TimeWeightedOpenClosedScoring {
       val startDt = new DateTime(start, tz)
       val endDt = new DateTime(end, tz)
 
-      val startAtTopOfHour = toTopOfHour(startDt)
-      val endAtTopOfHour = toTopOfHour(endDt)
+      val hourAfterStart = toTopOfHour(startDt).plusHours(1)
+      val hourBeforeEnd = toTopOfHour(endDt)
 
-      val hoursOpen = Iterator.iterate(startAtTopOfHour)(_.plusHours(1)).takeWhile(_.isBefore(endAtTopOfHour)).toSeq
+      val hoursOpen = Iterator.iterate(hourAfterStart)(_.plusHours(1)).takeWhile(_.isBefore(hourBeforeEnd)).toSeq
       val wholePenaltyMs = hoursOpen.filter(isWorkHour).size * 1.hour.toMillis
 
-      val partialPenaltyMs = if (isWorkHour(endDt)) {
-        endDt.getMillis - endAtTopOfHour.getMillis
+      val partialPenaltyStartMs = if (isWorkHour(startDt)) {
+        hourAfterStart.getMillis - startDt.getMillis
       } else {
         0
       }
 
-      wholePenaltyMs + partialPenaltyMs
+      val partialPenaltyEndMs = if (isWorkHour(endDt)) {
+        endDt.getMillis - hourBeforeEnd.getMillis
+      } else {
+        0
+      }
+
+      wholePenaltyMs + partialPenaltyStartMs + partialPenaltyEndMs
     }
 
     override def maxPenaltyMsPerDay: Long = 8.hours.toMillis
