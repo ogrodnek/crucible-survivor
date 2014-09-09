@@ -19,7 +19,7 @@ class TimeWeightedOpenClosedScoringTest extends WordSpec with Matchers {
       start.getDayOfWeek should be(DateTimeConstants.MONDAY)
       end.getDayOfWeek should be(DateTimeConstants.MONDAY)
 
-      workHourPenaltyCalculator().apply(start.getMillis, end.getMillis) should be(end.getMillis - start.getMillis)
+      new WorkHourPenaltyCalculator(tz).apply(start.getMillis, end.getMillis) should be(end.getMillis - start.getMillis)
     }
 
     "Count no time overnight" in {
@@ -30,7 +30,7 @@ class TimeWeightedOpenClosedScoringTest extends WordSpec with Matchers {
       start.getDayOfWeek should be(DateTimeConstants.MONDAY)
       end.getDayOfWeek should be(DateTimeConstants.TUESDAY)
 
-      workHourPenaltyCalculator().apply(start.getMillis, end.getMillis) should be(0.0)
+      new WorkHourPenaltyCalculator(tz).apply(start.getMillis, end.getMillis) should be(0.0)
     }
 
     "Count the work hours for an interval including both work and non-work hours" in {
@@ -41,7 +41,7 @@ class TimeWeightedOpenClosedScoringTest extends WordSpec with Matchers {
       start.getDayOfWeek should be(DateTimeConstants.MONDAY)
       end.getDayOfWeek should be(DateTimeConstants.MONDAY)
 
-      workHourPenaltyCalculator().apply(start.getMillis, end.getMillis) should be(6.hours.toMillis)
+      new WorkHourPenaltyCalculator(tz).apply(start.getMillis, end.getMillis) should be(6.hours.toMillis)
     }
 
     "Count 8 hours per full weekday" in {
@@ -52,7 +52,7 @@ class TimeWeightedOpenClosedScoringTest extends WordSpec with Matchers {
       start.getDayOfWeek should be(DateTimeConstants.MONDAY)
       end.getDayOfWeek should be(DateTimeConstants.THURSDAY)
 
-      workHourPenaltyCalculator().apply(start.getMillis, end.getMillis) should be(3 * 8.hours.toMillis)
+      new WorkHourPenaltyCalculator(tz).apply(start.getMillis, end.getMillis) should be(3 * 8.hours.toMillis)
     }
 
     "Not count time on weekends" in {
@@ -63,7 +63,7 @@ class TimeWeightedOpenClosedScoringTest extends WordSpec with Matchers {
       start.getDayOfWeek should be(DateTimeConstants.SATURDAY)
       end.getDayOfWeek should be(DateTimeConstants.SUNDAY)
 
-      workHourPenaltyCalculator().apply(start.getMillis, end.getMillis) should be(0.0)
+      new WorkHourPenaltyCalculator(tz).apply(start.getMillis, end.getMillis) should be(0.0)
     }
 
     "Count weekdays in intervals spanning both weekends and weekdays" in {
@@ -74,7 +74,51 @@ class TimeWeightedOpenClosedScoringTest extends WordSpec with Matchers {
       start.getDayOfWeek should be(DateTimeConstants.SUNDAY)
       end.getDayOfWeek should be(DateTimeConstants.MONDAY)
 
-      workHourPenaltyCalculator().apply(start.getMillis, end.getMillis) should be(6.hours.toMillis)
+      new WorkHourPenaltyCalculator(tz).apply(start.getMillis, end.getMillis) should be(6.hours.toMillis)
+    }
+
+    "Include partial hours at the beginning, during work hours" in {
+      val start = DateTime.parse("2014-09-08T9:30:00-07:00")
+      val end = DateTime.parse("2014-09-08T16:00:00-07:00")
+
+      // assert inputs are a weekday
+      start.getDayOfWeek should be(DateTimeConstants.MONDAY)
+      end.getDayOfWeek should be(DateTimeConstants.MONDAY)
+
+      new WorkHourPenaltyCalculator(tz).apply(start.getMillis, end.getMillis) should be(end.getMillis - start.getMillis)
+    }
+
+    "Include partial hours at the end, during work horus" in {
+      val start = DateTime.parse("2014-09-08T10:00:00-07:00")
+      val end = DateTime.parse("2014-09-08T16:30:00-07:00")
+
+      // assert inputs are a weekday
+      start.getDayOfWeek should be(DateTimeConstants.MONDAY)
+      end.getDayOfWeek should be(DateTimeConstants.MONDAY)
+
+      new WorkHourPenaltyCalculator(tz).apply(start.getMillis, end.getMillis) should be(end.getMillis - start.getMillis)
+    }
+
+    "Not include partial hours at the beginning, outside of work horus" in {
+      val start = DateTime.parse("2014-09-08T8:45:00-07:00")
+      val end = DateTime.parse("2014-09-08T16:00:00-07:00")
+
+      // assert inputs are a weekday
+      start.getDayOfWeek should be(DateTimeConstants.MONDAY)
+      end.getDayOfWeek should be(DateTimeConstants.MONDAY)
+
+      new WorkHourPenaltyCalculator(tz).apply(start.getMillis, end.getMillis) should be(7.hours.toMillis)
+    }
+
+    "Not include partial hours at the end, outside of work hours" in {
+      val start = DateTime.parse("2014-09-08T10:00:00-07:00")
+      val end = DateTime.parse("2014-09-08T17:30:00-07:00")
+
+      // assert inputs are a weekday
+      start.getDayOfWeek should be(DateTimeConstants.MONDAY)
+      end.getDayOfWeek should be(DateTimeConstants.MONDAY)
+
+      new WorkHourPenaltyCalculator(tz).apply(start.getMillis, end.getMillis) should be(7.hours.toMillis)
     }
   }
 
