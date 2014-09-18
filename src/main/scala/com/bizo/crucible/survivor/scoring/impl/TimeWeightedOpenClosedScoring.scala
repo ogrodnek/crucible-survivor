@@ -19,13 +19,16 @@ import org.joda.time._
 object TimeWeightedOpenClosedScoring {
   import DateTimeConstants._
 
+  case class Start(val ms: Long) extends AnyVal
+  case class End(val ms: Long) extends AnyVal
+
   private def toTopOfHour(dt: DateTime): DateTime = {
     dt.withMinuteOfHour(0).withSecondOfMinute(0).withMillisOfSecond(0)
   }
 
   trait PenaltyCalculator {
     // How many MS to penalize a reviewer
-    def apply(start: Long, end: Long): Long
+    def apply(start: Start, end: End): Long
 
     // maximum penalty for any one day, used to determine what "1d" means on the shame board
     def maxPenaltyMsPerDay: Long = 1.day.toMillis
@@ -33,14 +36,14 @@ object TimeWeightedOpenClosedScoring {
 
   // Penalize all the times! -- here for reference
   object NaivePenaltyCalculator extends PenaltyCalculator {
-    override def apply(start: Long, end: Long): Long = (end - start)
+    override def apply(start: Start, end: End): Long = (end.ms - start.ms)
   }
 
   // gets a work hour penalty calculator with that only counts work hours 9-5 M-F in the given time zone
   class WorkHourPenaltyCalculator(tz: DateTimeZone) extends PenaltyCalculator {
-    override def apply(start: Long, end: Long): Long = {
-      val startDt = new DateTime(start, tz)
-      val endDt = new DateTime(end, tz)
+    override def apply(start: Start, end: End): Long = {
+      val startDt = new DateTime(start.ms, tz)
+      val endDt = new DateTime(end.ms, tz)
 
       val hourAfterStart = toTopOfHour(startDt).plusHours(1)
       val hourBeforeEnd = toTopOfHour(endDt)
@@ -97,7 +100,7 @@ class TimeWeightedOpenClosedScoring(
     def penaltyMs(reviewer: ReviewerState, review: Review): Long = {
       val rawStartMs = review.createDate.getTime
       val rawEndMs = reviewer.completionStatusChangeDate.getOrElse(currentTime)
-      penaltyCalculator(rawEndMs, rawStartMs)
+      penaltyCalculator(Start(rawStartMs), End(rawEndMs))
     }
 
     // measured in hours
