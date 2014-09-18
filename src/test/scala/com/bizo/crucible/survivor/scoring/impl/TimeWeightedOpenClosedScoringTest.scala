@@ -19,7 +19,7 @@ class TimeWeightedOpenClosedScoringTest extends WordSpec with Matchers {
       start.getDayOfWeek should be(DateTimeConstants.MONDAY)
       end.getDayOfWeek should be(DateTimeConstants.MONDAY)
 
-      new WorkHourPenaltyCalculator(tz).apply(start.getMillis, end.getMillis) should be(end.getMillis - start.getMillis)
+      new WorkHourPenaltyCalculator(tz).apply(Start(start.getMillis), End(end.getMillis)) should be(end.getMillis - start.getMillis)
     }
 
     "Count no time overnight" in {
@@ -30,7 +30,7 @@ class TimeWeightedOpenClosedScoringTest extends WordSpec with Matchers {
       start.getDayOfWeek should be(DateTimeConstants.MONDAY)
       end.getDayOfWeek should be(DateTimeConstants.TUESDAY)
 
-      new WorkHourPenaltyCalculator(tz).apply(start.getMillis, end.getMillis) should be(0.0)
+      new WorkHourPenaltyCalculator(tz).apply(Start(start.getMillis), End(end.getMillis)) should be(0.0)
     }
 
     "Count the work hours for an interval including both work and non-work hours" in {
@@ -41,7 +41,7 @@ class TimeWeightedOpenClosedScoringTest extends WordSpec with Matchers {
       start.getDayOfWeek should be(DateTimeConstants.MONDAY)
       end.getDayOfWeek should be(DateTimeConstants.MONDAY)
 
-      new WorkHourPenaltyCalculator(tz).apply(start.getMillis, end.getMillis) should be(6.hours.toMillis)
+      new WorkHourPenaltyCalculator(tz).apply(Start(start.getMillis), End(end.getMillis)) should be(6.hours.toMillis)
     }
 
     "Count 8 hours per full weekday" in {
@@ -52,7 +52,7 @@ class TimeWeightedOpenClosedScoringTest extends WordSpec with Matchers {
       start.getDayOfWeek should be(DateTimeConstants.MONDAY)
       end.getDayOfWeek should be(DateTimeConstants.THURSDAY)
 
-      new WorkHourPenaltyCalculator(tz).apply(start.getMillis, end.getMillis) should be(3 * 8.hours.toMillis)
+      new WorkHourPenaltyCalculator(tz).apply(Start(start.getMillis), End(end.getMillis)) should be(3 * 8.hours.toMillis)
     }
 
     "Not count time on weekends" in {
@@ -63,7 +63,7 @@ class TimeWeightedOpenClosedScoringTest extends WordSpec with Matchers {
       start.getDayOfWeek should be(DateTimeConstants.SATURDAY)
       end.getDayOfWeek should be(DateTimeConstants.SUNDAY)
 
-      new WorkHourPenaltyCalculator(tz).apply(start.getMillis, end.getMillis) should be(0.0)
+      new WorkHourPenaltyCalculator(tz).apply(Start(start.getMillis), End(end.getMillis)) should be(0.0)
     }
 
     "Count weekdays in intervals spanning both weekends and weekdays" in {
@@ -74,7 +74,7 @@ class TimeWeightedOpenClosedScoringTest extends WordSpec with Matchers {
       start.getDayOfWeek should be(DateTimeConstants.SUNDAY)
       end.getDayOfWeek should be(DateTimeConstants.MONDAY)
 
-      new WorkHourPenaltyCalculator(tz).apply(start.getMillis, end.getMillis) should be(6.hours.toMillis)
+      new WorkHourPenaltyCalculator(tz).apply(Start(start.getMillis), End(end.getMillis)) should be(6.hours.toMillis)
     }
 
     "Include partial hours at the beginning, during work hours" in {
@@ -85,7 +85,7 @@ class TimeWeightedOpenClosedScoringTest extends WordSpec with Matchers {
       start.getDayOfWeek should be(DateTimeConstants.MONDAY)
       end.getDayOfWeek should be(DateTimeConstants.MONDAY)
 
-      new WorkHourPenaltyCalculator(tz).apply(start.getMillis, end.getMillis) should be(end.getMillis - start.getMillis)
+      new WorkHourPenaltyCalculator(tz).apply(Start(start.getMillis), End(end.getMillis)) should be(end.getMillis - start.getMillis)
     }
 
     "Include partial hours at the end, during work horus" in {
@@ -96,7 +96,7 @@ class TimeWeightedOpenClosedScoringTest extends WordSpec with Matchers {
       start.getDayOfWeek should be(DateTimeConstants.MONDAY)
       end.getDayOfWeek should be(DateTimeConstants.MONDAY)
 
-      new WorkHourPenaltyCalculator(tz).apply(start.getMillis, end.getMillis) should be(end.getMillis - start.getMillis)
+      new WorkHourPenaltyCalculator(tz).apply(Start(start.getMillis), End(end.getMillis)) should be(end.getMillis - start.getMillis)
     }
 
     "Not include partial hours at the beginning, outside of work horus" in {
@@ -107,7 +107,7 @@ class TimeWeightedOpenClosedScoringTest extends WordSpec with Matchers {
       start.getDayOfWeek should be(DateTimeConstants.MONDAY)
       end.getDayOfWeek should be(DateTimeConstants.MONDAY)
 
-      new WorkHourPenaltyCalculator(tz).apply(start.getMillis, end.getMillis) should be(7.hours.toMillis)
+      new WorkHourPenaltyCalculator(tz).apply(Start(start.getMillis), End(end.getMillis)) should be(7.hours.toMillis)
     }
 
     "Not include partial hours at the end, outside of work hours" in {
@@ -118,7 +118,7 @@ class TimeWeightedOpenClosedScoringTest extends WordSpec with Matchers {
       start.getDayOfWeek should be(DateTimeConstants.MONDAY)
       end.getDayOfWeek should be(DateTimeConstants.MONDAY)
 
-      new WorkHourPenaltyCalculator(tz).apply(start.getMillis, end.getMillis) should be(7.hours.toMillis)
+      new WorkHourPenaltyCalculator(tz).apply(Start(start.getMillis), End(end.getMillis)) should be(7.hours.toMillis)
     }
   }
 
