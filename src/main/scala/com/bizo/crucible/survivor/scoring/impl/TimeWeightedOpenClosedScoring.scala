@@ -170,6 +170,6 @@ class TimeWeightedOpenClosedScoring(
     val wholeHours = hours.toInt
     val minutes = (hours - wholeHours) * 1.hour.toMinutes
 
-    f"${wholeHours}h${minutes.toInt}%02.0fm"
+    f"${wholeHours}h${minutes.toInt}%2dm"
   }
 }
