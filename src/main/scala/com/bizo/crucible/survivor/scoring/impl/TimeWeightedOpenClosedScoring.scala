@@ -111,7 +111,7 @@ class TimeWeightedOpenClosedScoring(
 
       if (!hasCompletedAReview) {
         // not worthy of fame!
-        return 14.days.toMillis
+        return 14.days.toHours
       }
 
       val penalties = reviews.filter {
