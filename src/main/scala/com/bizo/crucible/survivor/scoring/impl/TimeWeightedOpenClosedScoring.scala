@@ -105,6 +105,15 @@ class TimeWeightedOpenClosedScoring(
 
     // measured in hours
     def fameScore(reviews: Seq[(ReviewerState, ReviewDetails)]): Double = {
+      val hasCompletedAReview = reviews.exists {
+        case (reviewer, _) => reviewer.completionStatusChangeDate.isDefined
+      }
+
+      if (!hasCompletedAReview) {
+        // not worthy of fame!
+        return 14.days.toHours
+      }
+
       val penalties = reviews.filter {
         case (reviewer, _) =>
           reviewer.completionStatusChangeDate.map(_ > oneWeekAgo).getOrElse(true)
